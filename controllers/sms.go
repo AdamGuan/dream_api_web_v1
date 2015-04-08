@@ -116,7 +116,7 @@ func (u *SmsController) GetSms() {
 // @Description 发送一条短信通知(token: md5(pkg))
 // @Param	mobilePhoneNumber	path	string	true	手机号码
 // @Param	orderNum			query	string	false	订单号码
-// @Param	smsTemplate			query	string	false	短信模板名称(订单通知:orderNotice)
+// @Param	smsTemplate			query	string	false	短信模板名称(订单已付款通知:orderNotice,订单发货通知:orderShipment)
 // @Param	sign				header	string	false	签名(暂时不用)
 // @Param	pkg					header	string	true	包名(值暂时为：webdream)
 // @Success	200 {object} models.MResp
@@ -148,8 +148,25 @@ func (u *SmsController) GetNoticeSms() {
 		datas["responseNo"] = -1
 		//判断模板
 		switch smsTemplate{
-			case "orderNotice":	//订单通知
+			case "orderNotice":	//订单付款通知
 				template := "template3"
+				orderNum := u.Ctx.Request.FormValue("orderNum")
+				if len(orderNum) > 0{
+					pkgConfig := pkgObj.GetPkgConfig(pkg)
+					if len(pkgConfig) > 0 && smsObj.CheckMsmRateValid(mobilePhoneNumber,pkg){
+						smsObj.AddMsmRate(mobilePhoneNumber,pkg)
+						res := smsObj.GetOrderMsm(mobilePhoneNumber,pkgConfig["F_app_id"],pkgConfig["F_app_key"],pkgConfig["F_app_name"],template,pkg,orderNum)
+						if len(res) == 0{
+							datas["responseNo"] = 0
+							smsObj.AddMsmRate(mobilePhoneNumber,pkg)
+							smsObj.AddOrderMsm(orderNum,mobilePhoneNumber,pkg)
+						}else{
+							smsObj.DeleteMsmRate(mobilePhoneNumber,pkg)
+						}
+					}
+				}
+			case "orderShipment":	//订单发货
+				template := "template4"
 				orderNum := u.Ctx.Request.FormValue("orderNum")
 				if len(orderNum) > 0{
 					pkgConfig := pkgObj.GetPkgConfig(pkg)
