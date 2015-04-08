@@ -20,4 +20,11 @@ func init() {
 			[]string{"get"},
 			nil})
 
+	beego.GlobalControllerRouter["dream_api_web_v1/controllers:SmsController"] = append(beego.GlobalControllerRouter["dream_api_web_v1/controllers:SmsController"],
+		beego.ControllerComments{
+			"GetNoticeSms",
+			`/notice/:mobilePhoneNumber`,
+			[]string{"get"},
+			nil})
+
 }

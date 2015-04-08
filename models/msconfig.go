@@ -11,6 +11,9 @@ import (
 	"github.com/astaxie/beego/config" 
 )
 
+var Debug bool
+var DebugErrlog bool
+
 //key:响应代码，value:响应信息
 var ConfigMyResponse map[string]string
 
@@ -20,13 +23,19 @@ func init() {
 	maxConn,_ := dbconf.Int("maxConn")
 	userName := dbconf.String(beego.RunMode+"::userName")
 	password := dbconf.String(beego.RunMode+"::password")
-	dbName := dbconf.String("dbName")
+	dbName := dbconf.String(beego.RunMode+"::dbName")
 	orm.RegisterDataBase("default", "mysql", userName+":"+password+"@/"+dbName+"?charset=utf8&loc=Asia%2FShanghai",maxIdle, maxConn)
 	orm.DefaultTimeLoc = time.UTC
-	if beego.RunMode == "dev"{
+	appConf, _ := config.NewConfig("ini", "conf/app.conf")
+	debug,_ := appConf.Bool(beego.RunMode+"::debug")
+	DebugErrlog,_ = appConf.Bool(beego.RunMode+"::errlog")
+	Debug = debug
+	if debug{
 		orm.Debug = true
 	}
-	logFile, _ := os.OpenFile("./db.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
+	otherConf, _ := config.NewConfig("ini", "conf/other.conf")
+	dbLogFile := otherConf.String("dbLogFile")
+	logFile, _ := os.OpenFile(dbLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
 	orm.DebugLog = orm.NewLog(logFile)
 
 	getResponseConfig()

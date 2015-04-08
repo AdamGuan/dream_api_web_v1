@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
+//	"github.com/astaxie/beego"
+//	"github.com/astaxie/beego/logs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -15,19 +15,11 @@ import (
 	//"net/url"
 	"time"
 	"regexp"
+	"math/rand"
+//	"github.com/astaxie/beego/config" 
 )
 
-var MyLog *logs.BeeLogger
-
 func init() {
-	//初始化log
-	if beego.RunMode == "dev" {
-		MyLog = logs.NewLogger(10000)
-		MyLog.SetLogger("file", `{"filename":"log.log"}`)
-		MyLog.EnableFuncCallDepth(true)
-		//MyLog.Debug("debug test1")
-		// MyLog.Error("error")
-	}
 }
 
 //类型转化 string  to int
@@ -68,7 +60,7 @@ func CreatePwd(num int) string {
 }
 
 //leanCloud curl
-func CurlLeanCloud(requestUri string, method string, requestData map[string]string, appId string, appKey string) map[string]interface{} {
+func CurlLeanCloud(requestUri string, method string, requestData map[string]string, appId string, appKey string) (map[string]interface{},map[string][]string) {
 	geturl := requestUri
 	req, _ := http.NewRequest(method, geturl, nil)
 	data, _ := json.Marshal(requestData)
@@ -90,7 +82,7 @@ func CurlLeanCloud(requestUri string, method string, requestData map[string]stri
 	bodyByte, _ := ioutil.ReadAll(resp.Body)
 	p := map[string]interface{}{}
 	json.Unmarshal(bodyByte, &p)
-	return p
+	return p,resp.Header
 }
 
 //检查签名
@@ -99,7 +91,10 @@ func CheckSign(sign string, token string) bool {
 	if len(sign) == 46 && len(token) == 32 {
 		timestamp := sign[0:14]
 		//检测是否超时
-		if beego.RunMode != "dev"{
+//		appConf, _ := config.NewConfig("ini", "conf/app.conf")
+//		debug,_ := appConf.Bool(beego.RunMode+"::debug")
+//		if !debug{
+		if 1 != 1{
 			nowTime, _ := strconv.Atoi(time.Now().Format("20060102150405"))
 			requestTime, _ := strconv.Atoi(timestamp)
 			timedistince := nowTime - requestTime
@@ -155,4 +150,74 @@ func GetDateTimeBeforeMinute(num int)string{
 
 func GetDateTimeAfterMinute(num int)string{
 	return time.Now().Add(time.Minute * time.Duration(num)).Format("2006-01-02 15:04:05")
+}
+
+func Split(str string,flag string)[]string{
+	return strings.Split(str, ",")
+}
+
+func JoinString(list []string,flag string)string{
+	result := ""
+	if len(list) > 0{
+		for _,v := range list{
+			result += v+","
+		}
+		result = strings.Trim(result,",")
+	}
+	return result
+}
+
+func StringInArray(value string,list []string)bool{
+	result := false
+	for _,item := range list{
+		if value == item{
+			result = true
+			break
+		}
+	}
+	return result
+}
+
+// 检查文件或目录是否存在
+// 如果由 filename 指定的文件或目录存在则返回 true，否则返回 false
+func Exist(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil || os.IsExist(err)
+}
+
+//检查昵称有效性
+func CheckNickNameValid(nickName string)bool{
+	matched, err := regexp.MatchString("^[\u4e00-\u9fa5a-zA-Z0-9]{0,20}$", nickName)
+	if err == nil && matched{
+		return true
+	}
+	return false
+}
+
+//检查真实名有效性
+func CheckRealNameValid(realName string)bool{
+	matched, err := regexp.MatchString("^[\u4e00-\u9fa5a-zA-Z0-9]{0,20}$", realName)
+	if err == nil && matched{
+		return true
+	}
+	return false
+}
+
+//检查email有效性
+func CheckEmailValid(email string)bool{
+	matched, err := regexp.MatchString("^(\\w)+(\\.\\w+)*@(\\w)+((\\.\\w+)+)$", email)
+	if err == nil && matched{
+		return true
+	}
+	return false
+}
+
+//生成一个短信验证码
+func GetSmsNum(bit int)string{
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	str := ""
+	for i:=0;i<bit;i++{
+		str = str+IntToString(r.Intn(9))
+	}
+	return str
 }
