@@ -221,3 +221,16 @@ func GetSmsNum(bit int)string{
 	}
 	return str
 }
+
+//json decode
+//用法: result,err := JsonDecode(`{"Name":"adam","Age":29}`)
+func JsonDecode(requestData string)(map[string]interface{},error){
+	m := make(map[string]interface{})
+	dec := json.NewDecoder(strings.NewReader(requestData))
+	err := dec.Decode(&m)
+	if err == nil{
+		return m,nil
+	}else{
+		return m,err
+	}
+}

@@ -156,3 +156,18 @@ func (u *MSms) CheckWhiteIp(ip string)bool {
 	}
 	return false
 }
+
+//获取短信模板名
+func (u *MSms) GetSmsTmplate(key string,pkgconfig map[string]string)string {
+	if len(pkgconfig) > 0{
+		templates := pkgconfig["F_app_msm_template"]
+		result,err := helper.JsonDecode(templates)
+		if err == nil {
+			template,ok := result[key]
+			if ok{
+				return template.(string)
+			}
+		}
+	}
+	return ""
+}

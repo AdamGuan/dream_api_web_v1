@@ -96,12 +96,17 @@ func (u *SmsController) GetSms() {
 		pkgConfig := pkgObj.GetPkgConfig(pkg)
 		if len(pkgConfig) > 0 && smsObj.CheckMsmRateValid(mobilePhoneNumber,pkg){
 			smsObj.AddMsmRate(mobilePhoneNumber,pkg)
-			res := smsObj.GetMsm(mobilePhoneNumber,pkgConfig["F_app_id"],pkgConfig["F_app_key"],pkgConfig["F_app_name"],pkgConfig["F_app_msm_template"],pkg)
-			if len(res) == 0{
-				datas["responseNo"] = 0
-				smsObj.AddMsmRate(mobilePhoneNumber,pkg)
+			template := smsObj.GetSmsTmplate("valid",pkgConfig)
+			if len(template) > 0 {
+				res := smsObj.GetMsm(mobilePhoneNumber,pkgConfig["F_app_id"],pkgConfig["F_app_key"],pkgConfig["F_app_name"],template,pkg)
+				if len(res) == 0{
+					datas["responseNo"] = 0
+					smsObj.AddMsmRate(mobilePhoneNumber,pkg)
+				}else{
+					smsObj.DeleteMsmRate(mobilePhoneNumber,pkg)
+				}
 			}else{
-				smsObj.DeleteMsmRate(mobilePhoneNumber,pkg)
+				datas["responseNo"] = -27
 			}
 		}
 	}else if datas["responseNo"] == 0{
@@ -147,41 +152,25 @@ func (u *SmsController) GetNoticeSms() {
 	if datas["responseNo"] == 0 && helper.CheckMPhoneValid(mobilePhoneNumber) {
 		datas["responseNo"] = -1
 		//判断模板
-		switch smsTemplate{
-			case "orderNotice":	//订单付款通知
-				template := "template3"
-				orderNum := u.Ctx.Request.FormValue("orderNum")
-				if len(orderNum) > 0{
-					pkgConfig := pkgObj.GetPkgConfig(pkg)
-					if len(pkgConfig) > 0 && smsObj.CheckMsmRateValid(mobilePhoneNumber,pkg){
+		pkgConfig := pkgObj.GetPkgConfig(pkg)
+		template := smsObj.GetSmsTmplate(smsTemplate,pkgConfig)
+		if len(template) > 0{
+			orderNum := u.Ctx.Request.FormValue("orderNum")
+			if len(orderNum) > 0{
+				if len(pkgConfig) > 0 && smsObj.CheckMsmRateValid(mobilePhoneNumber,pkg){
+					smsObj.AddMsmRate(mobilePhoneNumber,pkg)
+					res := smsObj.GetOrderMsm(mobilePhoneNumber,pkgConfig["F_app_id"],pkgConfig["F_app_key"],pkgConfig["F_app_name"],template,pkg,orderNum)
+					if len(res) == 0{
+						datas["responseNo"] = 0
 						smsObj.AddMsmRate(mobilePhoneNumber,pkg)
-						res := smsObj.GetOrderMsm(mobilePhoneNumber,pkgConfig["F_app_id"],pkgConfig["F_app_key"],pkgConfig["F_app_name"],template,pkg,orderNum)
-						if len(res) == 0{
-							datas["responseNo"] = 0
-							smsObj.AddMsmRate(mobilePhoneNumber,pkg)
-							smsObj.AddOrderMsm(orderNum,mobilePhoneNumber,pkg)
-						}else{
-							smsObj.DeleteMsmRate(mobilePhoneNumber,pkg)
-						}
+						smsObj.AddOrderMsm(orderNum,mobilePhoneNumber,pkg)
+					}else{
+						smsObj.DeleteMsmRate(mobilePhoneNumber,pkg)
 					}
 				}
-			case "orderShipment":	//订单发货
-				template := "template4"
-				orderNum := u.Ctx.Request.FormValue("orderNum")
-				if len(orderNum) > 0{
-					pkgConfig := pkgObj.GetPkgConfig(pkg)
-					if len(pkgConfig) > 0 && smsObj.CheckMsmRateValid(mobilePhoneNumber,pkg){
-						smsObj.AddMsmRate(mobilePhoneNumber,pkg)
-						res := smsObj.GetOrderMsm(mobilePhoneNumber,pkgConfig["F_app_id"],pkgConfig["F_app_key"],pkgConfig["F_app_name"],template,pkg,orderNum)
-						if len(res) == 0{
-							datas["responseNo"] = 0
-							smsObj.AddMsmRate(mobilePhoneNumber,pkg)
-							smsObj.AddOrderMsm(orderNum,mobilePhoneNumber,pkg)
-						}else{
-							smsObj.DeleteMsmRate(mobilePhoneNumber,pkg)
-						}
-					}
-				}
+			}
+		}else{
+			datas["responseNo"] = -27
 		}
 	}else if datas["responseNo"] == 0 {
 		datas["responseNo"] = -1
