@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"dream_api_web_v1/models"
-//	"github.com/astaxie/beego"
-//	"net/http"
+	//	"github.com/astaxie/beego"
+	//	"net/http"
 	"dream_api_web_v1/helper"
 	//"fmt"
 	//"strings"
@@ -39,8 +39,8 @@ func (u *SmsController) Smsvalid() {
 	//check sign
 	datas["responseNo"] = u.checkSign()
 	//check white ip
-	if datas["responseNo"] == 0{
-		if !u.checkIp(){
+	if datas["responseNo"] == 0 {
+		if !u.checkIp() {
 			datas["responseNo"] = -1
 		}
 	}
@@ -48,14 +48,14 @@ func (u *SmsController) Smsvalid() {
 	if datas["responseNo"] == 0 && helper.CheckMPhoneValid(mobilePhoneNumber) && len(num) > 0 {
 		datas["responseNo"] = -1
 		pkgConfig := pkgObj.GetPkgConfig(pkg)
-		if len(pkgConfig) > 0{
-			res := smsObj.ValidMsm(pkg,num,mobilePhoneNumber,pkgConfig["F_app_id"],pkgConfig["F_app_key"])
-			if len(res) == 0{
+		if len(pkgConfig) > 0 {
+			res := smsObj.ValidMsm(pkg, num, mobilePhoneNumber, pkgConfig["F_app_id"], pkgConfig["F_app_key"])
+			if len(res) == 0 {
 				datas["responseNo"] = 0
-				smsObj.AddMsmActionvalid(mobilePhoneNumber,pkg,num)
+				smsObj.AddMsmActionvalid(mobilePhoneNumber, pkg, num)
 			}
 		}
-	}else if datas["responseNo"] == 0{
+	} else if datas["responseNo"] == 0 {
 		datas["responseNo"] = -1
 	}
 	//return
@@ -85,8 +85,8 @@ func (u *SmsController) GetSms() {
 	//check sign
 	datas["responseNo"] = u.checkSign()
 	//check white ip
-	if datas["responseNo"] == 0{
-		if !u.checkIp(){
+	if datas["responseNo"] == 0 {
+		if !u.checkIp() {
 			datas["responseNo"] = -1
 		}
 	}
@@ -94,22 +94,23 @@ func (u *SmsController) GetSms() {
 	if datas["responseNo"] == 0 && helper.CheckMPhoneValid(mobilePhoneNumber) {
 		datas["responseNo"] = -1
 		pkgConfig := pkgObj.GetPkgConfig(pkg)
-		if len(pkgConfig) > 0 && smsObj.CheckMsmRateValid(mobilePhoneNumber,pkg){
-			smsObj.AddMsmRate(mobilePhoneNumber,pkg)
-			template := smsObj.GetSmsTmplate("valid",pkgConfig)
+		if len(pkgConfig) > 0 && smsObj.CheckMsmRateValid(mobilePhoneNumber, pkg) {
+			smsObj.AddMsmRate(mobilePhoneNumber, pkg)
+			template := smsObj.GetSmsTmplate("valid", pkgConfig)
 			if len(template) > 0 {
-				res := smsObj.GetMsm(mobilePhoneNumber,pkgConfig["F_app_id"],pkgConfig["F_app_key"],pkgConfig["F_app_name"],template,pkg)
-				if len(res) == 0{
+				res := smsObj.GetMsm(mobilePhoneNumber, pkgConfig["F_app_id"], pkgConfig["F_app_key"], pkgConfig["F_app_name"], template, pkg)
+				if len(res) == 0 {
 					datas["responseNo"] = 0
-					smsObj.AddMsmRate(mobilePhoneNumber,pkg)
-				}else{
-					smsObj.DeleteMsmRate(mobilePhoneNumber,pkg)
+					smsObj.AddMsmRate(mobilePhoneNumber, pkg)
+					u.logSmsSend(pkg)
+				} else {
+					smsObj.DeleteMsmRate(mobilePhoneNumber, pkg)
 				}
-			}else{
+			} else {
 				datas["responseNo"] = -27
 			}
 		}
-	}else if datas["responseNo"] == 0{
+	} else if datas["responseNo"] == 0 {
 		datas["responseNo"] = -1
 	}
 
@@ -143,8 +144,8 @@ func (u *SmsController) GetNoticeSms() {
 	//check sign
 	datas["responseNo"] = u.checkSign()
 	//check white ip
-	if datas["responseNo"] == 0{
-		if !u.checkIp(){
+	if datas["responseNo"] == 0 {
+		if !u.checkIp() {
 			datas["responseNo"] = -1
 		}
 	}
@@ -153,26 +154,27 @@ func (u *SmsController) GetNoticeSms() {
 		datas["responseNo"] = -1
 		//判断模板
 		pkgConfig := pkgObj.GetPkgConfig(pkg)
-		template := smsObj.GetSmsTmplate(smsTemplate,pkgConfig)
-		if len(template) > 0{
+		template := smsObj.GetSmsTmplate(smsTemplate, pkgConfig)
+		if len(template) > 0 {
 			orderNum := u.Ctx.Request.FormValue("orderNum")
-			if len(orderNum) > 0{
-				if len(pkgConfig) > 0 && smsObj.CheckMsmRateValid(mobilePhoneNumber,pkg){
-					smsObj.AddMsmRate(mobilePhoneNumber,pkg)
-					res := smsObj.GetOrderMsm(mobilePhoneNumber,pkgConfig["F_app_id"],pkgConfig["F_app_key"],pkgConfig["F_app_name"],template,pkg,orderNum)
-					if len(res) == 0{
+			if len(orderNum) > 0 {
+				if len(pkgConfig) > 0 && smsObj.CheckMsmRateValid(mobilePhoneNumber, pkg) {
+					smsObj.AddMsmRate(mobilePhoneNumber, pkg)
+					res := smsObj.GetOrderMsm(mobilePhoneNumber, pkgConfig["F_app_id"], pkgConfig["F_app_key"], pkgConfig["F_app_name"], template, pkg, orderNum)
+					if len(res) == 0 {
 						datas["responseNo"] = 0
-						smsObj.AddMsmRate(mobilePhoneNumber,pkg)
-						smsObj.AddOrderMsm(orderNum,mobilePhoneNumber,pkg)
-					}else{
-						smsObj.DeleteMsmRate(mobilePhoneNumber,pkg)
+						smsObj.AddMsmRate(mobilePhoneNumber, pkg)
+						smsObj.AddOrderMsm(orderNum, mobilePhoneNumber, pkg)
+						u.logSmsSend(pkg)
+					} else {
+						smsObj.DeleteMsmRate(mobilePhoneNumber, pkg)
 					}
 				}
 			}
-		}else{
+		} else {
 			datas["responseNo"] = -27
 		}
-	}else if datas["responseNo"] == 0 {
+	} else if datas["responseNo"] == 0 {
 		datas["responseNo"] = -1
 	}
 
@@ -181,8 +183,20 @@ func (u *SmsController) GetNoticeSms() {
 }
 
 //检查ip是否存在于白名单中
-func (u *SmsController) checkIp()bool {
-//	var smsObj *models.MSms
-//	return smsObj.CheckWhiteIp(u.Ctx.Input.IP())
+func (u *SmsController) checkIp() bool {
+	//	var smsObj *models.MSms
+	//	return smsObj.CheckWhiteIp(u.Ctx.Input.IP())
 	return true
+}
+
+//记录发送成功的短信
+func (u *SmsController) logSmsSend(pkg string) {
+	method := "POST"
+	debug := "0"
+	if models.Debug {
+		debug = "1"
+	}
+	requestUri := "http://useracc.dream.cn:8286/v1/history/smssend?pkg=" + pkg + "&debug=" + debug
+	requestData := map[string]string{}
+	helper.CurlSmsLog(requestUri, method, requestData)
 }
